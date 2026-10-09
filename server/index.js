@@ -21,6 +21,7 @@ import analyticsRoutes from './routes/analytics.js';
 import auditRoutes from './routes/audit.js';
 import notificationsRoutes from './routes/notifications.js';
 import adminRoutes from './routes/admin.js';
+import listenRoutes from './routes/listen.js';
 
 const app = express();
 
@@ -67,6 +68,9 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/audit-logs', auditRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Standalone minimal expiring audio link player
+app.use('/listen', listenRoutes);
 
 // Fallback for single-page application routing (hash router is in index.html)
 app.get('*', (req, res, next) => {

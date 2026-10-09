@@ -4,6 +4,7 @@ import app from '../../server/index.js';
 import { db } from '../../server/db/index.js';
 import { runMigrations } from '../../server/migrations/migrator.js';
 import { seedDatabase } from '../../server/seed/seed.js';
+import { storageAdapter } from '../../server/storage/index.js';
 
 let server;
 const TEST_PORT = 3123;
@@ -235,8 +236,93 @@ test('API Duplicate Protection: Identical token and fingerprint within 10 minute
   assert.ok(audit, 'Audit entry for duplicate prevention must exist');
 });
 
+test('API Expiring Audio Links: Create, standalone player, range streaming, audit, and revoke', async () => {
+  const priyaJar = new CookieJar();
+  await request('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: 'priya.sharma@campus.edu',
+      password: 'SentinelDemo2026!'
+    })
+  }, priyaJar);
+
+  const csrf = priyaJar.get('sentinel_csrf');
+  const priyaCase = db.prepare(`
+    SELECT * FROM cases WHERE student_user_id = (SELECT id FROM users WHERE email = 'priya.sharma@campus.edu') LIMIT 1
+  `).get();
+  assert.ok(priyaCase);
+
+  // Attach a minimal dummy audio recording to priyaCase
+  const wavHeader = Buffer.alloc(44);
+  wavHeader.write('RIFF', 0);
+  wavHeader.writeUInt32LE(36 + 1000, 4);
+  wavHeader.write('WAVE', 8);
+  const dummyBuffer = Buffer.concat([wavHeader, Buffer.alloc(1000)]);
+  const saved = await storageAdapter.saveFile(dummyBuffer, 'test_link_audio.wav');
+
+  db.prepare(`
+    INSERT INTO audio_complaints (
+      case_id, storage_key, original_mime, size_bytes, duration_seconds,
+      preferred_language, recorded_or_uploaded, sha256, created_at
+    ) VALUES (?, ?, 'audio/wav', ?, 1, 'Tamil', 'recorded', ?, ?)
+  `).run(priyaCase.id, saved.storageKey, saved.sizeBytes, saved.sha256, new Date().toISOString());
+
+  // 1. Generate Expiring Audio Link
+  const genRes = await request(`/api/cases/${priyaCase.id}/audio-link`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+    body: JSON.stringify({})
+  }, priyaJar);
+
+  assert.equal(genRes.status, 201);
+  assert.ok(genRes.body.rawToken);
+  assert.ok(genRes.body.listenUrl);
+  assert.equal(genRes.body.maxPlays, 5);
+  const linkId = genRes.body.id;
+  const rawToken = genRes.body.rawToken;
+
+  // 2. Fetch /listen/:token (Standalone public player page with zero case details)
+  const playerRes = await request(`/listen/${rawToken}`, { method: 'GET' });
+  assert.equal(playerRes.status, 200);
+  assert.equal(playerRes.headers.get('x-robots-tag'), 'noindex, nofollow, noarchive');
+  assert.equal(playerRes.headers.get('cache-control'), 'no-store, no-cache, must-revalidate, private');
+  assert.ok(playerRes.body.includes('Confidential Audio Player'));
+  assert.equal(playerRes.body.includes(priyaCase.case_ref), false, 'Must not leak case_ref');
+  assert.equal(playerRes.body.includes('Priya Sharma'), false, 'Must not leak student name');
+
+  // 3. Stream audio via /listen/:token/stream with HTTP Range
+  const streamRes = await request(`/listen/${rawToken}/stream`, {
+    method: 'GET',
+    headers: { 'Range': 'bytes=0-100' }
+  });
+  assert.equal(streamRes.status, 206);
+  assert.equal(streamRes.headers.get('accept-ranges'), 'bytes');
+  assert.ok(streamRes.headers.get('content-range').startsWith('bytes 0-100/'));
+
+  // Verify play count and audit logging
+  const linkRow = db.prepare('SELECT plays_count FROM audio_links WHERE id = ?').get(linkId);
+  assert.equal(linkRow.plays_count, 1, 'Play count must increment on playback');
+
+  const auditPlay = db.prepare("SELECT * FROM audit_log WHERE action = 'AUDIO_LINK_PLAYBACK' AND entity_id = ?").get(String(linkId));
+  assert.ok(auditPlay, 'Playback must be audit logged');
+
+  // 4. Revoke audio link
+  const revokeRes = await request(`/api/cases/${priyaCase.id}/audio-links/${linkId}/revoke`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf }
+  }, priyaJar);
+  assert.equal(revokeRes.status, 200);
+
+  // 5. Verify revoked link returns 410 Gone
+  const revokedAccess = await request(`/listen/${rawToken}`, { method: 'GET' });
+  assert.equal(revokedAccess.status, 410);
+  assert.ok(revokedAccess.body.includes('Playback Link Revoked'));
+});
+
 test('Teardown Test Server', () => {
   if (server) {
     server.close();
   }
 });
+

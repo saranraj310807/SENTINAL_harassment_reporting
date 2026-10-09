@@ -140,16 +140,51 @@ SENTINEL implements pure, testable relationship scoring (`/server/engine/escalat
 
 ---
 
-## 8. WhatsApp Click-to-Chat Dispatch
+## 8. WhatsApp Notification Dispatch & Audio Sharing Module
 
 Module located at `/server/notifications/whatsapp.js`:
 - **Configured Recipient:** Raw input `WHATSAPP_RECIPIENT_RAW=7708704229`.
-- **E.164 Normalization:** Automatically normalized with country code `91` to `917708704229` when confirmed. Strips punctuation, dashes, brackets, and leading `+` or `00`.
-- **URL Generation:** Generates valid `https://wa.me/917708704229?text=...` with line breaks encoded as `%0A` and Unicode Tamil text safely preserved.
-- **Message Levels:**
-  - **Minimal (Default):** Case ID, separate incident vs submission timestamps, location, urgency flag, assigned authority, login link. (No student name).
-  - **Extended:** Adds student name, SIF number, department, truncated narrative description, audio/evidence availability badges.
-- **Copy Fallbacks:** Offers 1-click **"Copy Text"** and **"Copy Link"** fallbacks.
+- **E.164 Normalization:** Automatically normalized with country code `91` to `917708704229` when confirmed (`WHATSAPP_COUNTRY_CONFIRMED=true`). Strips punctuation, spaces, dashes, brackets, and leading `+` or `00`.
+- **URL Generation:** Generates standard `https://wa.me/917708704229?text=...` with line breaks encoded as `%0A` and Unicode Tamil text safely preserved without character corruption.
+- **Message Content & Clean Plain Text:**
+  - **Extended Level (Default for Demo):** Configured via `WHATSAPP_INCLUDE_DETAILS=true`. Formats Student Name, Department, SIF Number, Programme, Year and Section, Incident Category, short description, Audio Available (Yes/No), Evidence Available (Yes/No), Current Status.
+  - **Zero Emojis Guarantee:** All emojis and special symbols have been completely eliminated from notification text. Standard UTF-8 plain text ensures 100% reliable cross-platform rendering across mobile and desktop.
+  - **Separated Timestamps:** Explicitly separates *Incident Date/Time* from *Submission Date/Time*, both rendered in `CAMPUS_TIMEZONE` (`Asia/Kolkata`).
+  - **Student Contact Phone Privacy:** The reporter's phone number is omitted by default and included ONLY if an explicit server setting `WHATSAPP_INCLUDE_PHONE=true` is activated.
+  - **Localhost Link Suppression:** SENTINEL strictly forbids emitting `localhost` or insecure links into WhatsApp messages. Case and expiring audio links are included only when `APP_BASE_URL` is a verified public HTTPS URL.
+  - **Audio Notice:** Explicitly informs recipients: *"The original audio is stored in SENTINEL. It is shared separately from the Share sheet or by the expiring link below when available."*
+
+### Audio Playable in WhatsApp (Two Honest Methods)
+
+#### Method A: Direct Voice File Sharing (Web Share API Level 2)
+1. **In-Chat Audio Playback:** WhatsApp on Android and iOS supports playing voice files in-chat when shared as native `.m4a` / AAC or `.ogg` Opus files.
+2. **Format Conversion Only (`ffmpeg-static`):** When audio is recorded, SENTINEL generates a derived share copy formatted as `.m4a` AAC. The original recording and its SHA-256 remain **100% bit-for-bit untouched**. SENTINEL never alters, trims, transcribes, or translates audio.
+3. **Web Share API Workflow:**
+   - Client fetches audio blob from authenticated endpoint (`/api/cases/:id/audio?share=1`).
+   - Creates a `File` with mime `audio/mp4` and filename `SENTINEL-<caseId>.m4a`.
+   - Verifies `navigator.canShare({ files: [file] })` and calls `navigator.share({ files: [file], text: messageText })`.
+   - The user picks WhatsApp and the designated recipient contact (`+91 7708704229` displayed in the guidance instructions) and presses Send manually.
+4. **Desktop Fallback:** On desktop browsers lacking Web Share file support, the button automatically hides, displays an informative notice, and offers a **"Download Audio for Manual Attachment"** button for staff.
+
+#### Method B: Single-Purpose Expiring Audio Link
+1. **Cryptographic Token:** Generates a 256-bit secure random token stored as a SHA-256 hash in `audio_links`. Plaintext tokens are never stored in the database.
+2. **Configurable TTL & Playback Limits:** Default 24-hour expiration (`AUDIO_LINK_TTL_HOURS=24`) and maximum 5 plays (`AUDIO_LINK_MAX_PLAYS=5`).
+3. **Zero-Knowledge Standalone Player (`/listen/:token`):**
+   - Strictly isolated: **NO case details, student names, or categories** are visible on this page.
+   - Security headers: `noindex, nofollow`, `Cache-Control: no-store, private`, and strict CSP (`default-src 'self'`).
+   - HTTP Range streaming (`/listen/:token/stream`) with seeking support.
+   - Every playback increments the play counter and is permanently logged in the audit ledger.
+   - Authorities can instantly revoke links (`POST /api/cases/:id/audio-links/:linkId/revoke`), rendering them immediately 410 Gone.
+
+### Honest Status Tracking
+SENTINEL strictly tracks only verifiable local interaction states:
+- `Message prepared`
+- `WhatsApp opened`
+- `Awaiting manual send`
+- `Audio share sheet opened`
+- `Audio link created`
+
+> ⚠️ **Verification Notice:** SENTINEL never claims "delivered" or "sent". The system prominently displays: *"Opening WhatsApp or the share sheet does not prove the message or audio was sent, delivered, or read."*
 
 ---
 
@@ -179,7 +214,10 @@ Follow this step-by-step sequence to demonstrate the entire platform:
 5. **Step 5 — Voice Testimony & No-Transcription Notice:** Click **"Continue to Voice & Evidence"**. Observe the Direct Audio Complaint card, language selector (Tamil), audio visualizer, and the plain-language guarantee: *"Zero automated transcription is applied."*
 6. **Step 6 — CCTV Coverage Evaluation:** Click **"Continue to CCTV Coverage"**. Notice the locator evaluated fictional cameras `CAM-SO-01` and `CAM-SO-02` with retention windows and availability reasoning. Check camera `CAM-SO-01`.
 7. **Step 7 — Review & Submit:** Click **"Review and Confirm"**. Check the terms checkbox and click **"Submit Complaint to SENTINEL"**. Receive unique Case ID (e.g. `SNT-261009-XXXXXXXX`). Notice Incident timestamp and Submission timestamp are recorded separately.
-8. **Step 8 — WhatsApp Click-to-Chat:** Click **"Open WhatsApp Notification"**. Review the prefilled message card with recipient `+917708704229`. Notice the honest status tracker reads *"Message Prepared / Awaiting Manual Send"*, never *"Delivered"*. Test the "Copy Text" button.
+8. **Step 8 — WhatsApp Notification & Audio Sharing Dispatch:** Click **"Open WhatsApp Notification"**. Review the Extended message preview card (zero emojis, clean plain text) with recipient `+917708704229`. Notice the honest status tracker reads *"Message Prepared / Awaiting Manual Send"*, never *"Delivered"*. Test:
+   - **Method A (Web Share):** Click **"Share Audio via WhatsApp (Web Share)"** on a mobile browser or view the desktop fallback with **"Download Audio for Manual Attachment"**.
+   - **Method B (Expiring Link):** Click **"Generate Link"** to create a 24-hour single-purpose playback link with 5-play max limit.
+   - Click **"Open WhatsApp (Text)"** to open `wa.me/917708704229` in a new tab; observe status updating to *"WhatsApp Opened / Awaiting Manual Send"*.
 9. **Step 9 — HOD Investigation Workspace:** In the top quick-switcher, switch to **"Dr. Ramanathan (HOD - CSE)"**. Notice the Urgent Queue at the top. Click **"Workspace"** on the case. Review student details, play the audio, and post a confidential internal note: *"Initial committee inquiry begun."*
 10. **Step 10 — Submit Related Case B:** Switch to student Priya (or Rahul), go to `#/complaint/new`, and click **"Preset B: Related Hostel Incident"**. Submit the complaint.
 11. **Step 11 — Confirm Pattern & Escalate to Dean:** Switch to HOD Dr. Ramanathan, navigate to **"Related-Incident Review"** (`#/review`). Observe the candidate score (>= 50) and matched factor breakdown (`+30 category, +25 location, +15 recency, +20 suspect`). Click **"Confirm Link & Merge"** and enter a note. Observe the case group automatically escalates to **Dean**!
@@ -192,35 +230,40 @@ Follow this step-by-step sequence to demonstrate the entire platform:
 
 ## 11. Automated Test Results
 
-Run all 20 automated tests via:
+Run all 25 automated tests via:
 ```bash
 npm test
 ```
 
 ### Verified Test Output:
 ```
-✔ Setup Test Server (318ms)
-✔ API Auth & CSRF Protection: Rejects state-changing POST without CSRF token (104ms)
-✔ API RBAC & IDOR: Student cannot view another student case, audio, or authority routes (337ms)
-✔ API Audio Complaints: Magic byte verification and Range streaming (304ms)
-✔ API Duplicate Protection: Identical token and fingerprint within 10 minutes return existing case (336ms)
-✔ Teardown Test Server (2ms)
-✔ SENTINEL 15-Step Live Demo End-to-End Workflow (1984ms)
-✔ Case ID Generator: format and uniqueness over 1,000 iterations (46ms)
+✔ Setup Test Server (295ms)
+✔ API Auth & CSRF Protection: Rejects state-changing POST without CSRF token (105ms)
+✔ API RBAC & IDOR: Student cannot view another student case, audio, or authority routes (324ms)
+✔ API Audio Complaints: Magic byte verification and Range streaming (289ms)
+✔ API Duplicate Protection: Identical token and fingerprint within 10 minutes return existing case (316ms)
+✔ API Expiring Audio Links: Create, standalone player, range streaming, audit, and revoke (346ms)
+✔ Teardown Test Server (1ms)
+✔ SENTINEL 15-Step Live Demo End-to-End Workflow (2107ms)
+✔ Audio Share Copy: Format conversion only, original untouched & zero transcription (83ms)
+✔ Expiring Audio Link: Token hashing, expiration, max plays, and revocation (5ms)
+✔ Case ID Generator: format and uniqueness over 1,000 iterations (26ms)
 ✔ Escalation Engine: Pure Scoring Function (4ms)
-✔ Escalation Safeguard: Name or department alone can NEVER reach threshold (0.5ms)
-✔ Escalation Level Rules: 1 -> HOD, 2 -> Dean, 3+ -> Higher Authority (0.3ms)
-✔ Escalation Guarantee: Levels NEVER downgrade (0.3ms)
-✔ Demo Helper Verification: Presets A, B, C relate with score >= 50, Preset D remains unrelated (0.5ms)
-✔ Validation: Rejects future incident timestamp (7ms)
-✔ Validation: Accepts current or past incident timestamp (0.6ms)
-✔ Validation: Student SIF format and Indian phone number validation (1.2ms)
-✔ WhatsApp Normalization: 10-digit Indian standard and international E.164 (2.2ms)
-✔ WhatsApp URL & Unicode Encoding: preserves Tamil text and formatting (0.5ms)
-✔ WhatsApp Message Levels: Minimal vs Extended separation (26ms)
-✔ WhatsApp Honest States: Rejects fake delivery confirmations (0.6ms)
+✔ Escalation Safeguard: Name or department alone can NEVER reach threshold (0.4ms)
+✔ Escalation Level Rules: 1 -> HOD, 2 -> Dean, 3+ -> Higher Authority (0.2ms)
+✔ Escalation Guarantee: Levels NEVER downgrade (0.2ms)
+✔ Demo Helper Verification: Presets A, B, C relate with score >= 50, Preset D remains unrelated (0.4ms)
+✔ Validation: Rejects future incident timestamp (6ms)
+✔ Validation: Accepts current or past incident timestamp (0.7ms)
+✔ Validation: Student SIF format and Indian phone number validation (1.8ms)
+✔ WhatsApp Normalization: 10-digit Indian standard and international E.164 (1.2ms)
+✔ WhatsApp URL & Unicode Encoding: preserves Tamil text and punctuation (0.4ms)
+✔ WhatsApp Message: Extended content, zero emojis, separated timestamps, and honest notice (22ms)
+✔ WhatsApp Localhost Security: Never emits localhost link in WhatsApp message (0.8ms)
+✔ WhatsApp Honest States: Allows only honest states and rejects delivery confirmation (8ms)
+✔ Web Share API: Share button hidden when canShare is false / unsupported (0.5ms)
 
-Total: 20 tests passed, 0 failures, 0 skipped.
+Total: 25 tests passed, 0 failures, 0 skipped.
 ```
 
 ---

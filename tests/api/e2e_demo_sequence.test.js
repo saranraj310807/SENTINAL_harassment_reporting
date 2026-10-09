@@ -115,15 +115,17 @@ test('SENTINEL 15-Step Live Demo End-to-End Workflow', async () => {
   assert.equal(reqCctvRes.status, 201);
   assert.ok(reqCctvRes.body.preservationDeadline);
 
-  // Step 7: WhatsApp Notification Flow: Prepared -> Opened -> Awaiting Manual Send
+  // Step 7: WhatsApp Notification Flow: Prepared -> Opened -> Awaiting Manual Send -> Audio Share & Link
   const prepWaRes = await apiRequest(`/api/whatsapp/${caseA.id}/prepare`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ level: 'minimal' })
+    body: JSON.stringify({ level: 'extended' })
   }, studentJar);
   assert.equal(prepWaRes.status, 200);
   assert.equal(prepWaRes.body.recipient, '917708704229');
   assert.ok(prepWaRes.body.clickToChatUrl.startsWith('https://wa.me/917708704229?text='));
+  assert.ok(prepWaRes.body.messageText.includes('Student: Priya Sharma'));
+  assert.ok(prepWaRes.body.messageText.includes('The original audio is stored in SENTINEL. It is shared separately from the Share sheet or by the expiring link below when available.'));
 
   // Record opened and awaiting_manual_send
   const openWaRes = await apiRequest(`/api/whatsapp/${prepWaRes.body.id}/state`, {
@@ -139,6 +141,22 @@ test('SENTINEL 15-Step Live Demo End-to-End Workflow', async () => {
     body: JSON.stringify({ state: 'awaiting_manual_send' })
   }, studentJar);
   assert.equal(awaitWaRes.status, 200);
+
+  // Record audio share sheet opened
+  const shareSheetRes = await apiRequest(`/api/whatsapp/${prepWaRes.body.id}/state`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ state: 'audio_share_sheet_opened' })
+  }, studentJar);
+  assert.equal(shareSheetRes.status, 200);
+
+  // Rejection of fake delivery confirmation
+  const fakeDeliveryRes = await apiRequest(`/api/whatsapp/${prepWaRes.body.id}/state`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ state: 'delivery_confirmed' })
+  }, studentJar);
+  assert.equal(fakeDeliveryRes.status, 400);
 
   // Step 8: HOD Login (Dr. Ramanathan) & Case Review
   const hodJar = new CookieJar();

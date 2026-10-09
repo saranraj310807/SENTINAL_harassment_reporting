@@ -21,8 +21,11 @@ export const config = {
   ).split(','),
   WHATSAPP_RECIPIENT_RAW: process.env.WHATSAPP_RECIPIENT_RAW || '7708704229',
   WHATSAPP_DEFAULT_COUNTRY_CODE: process.env.WHATSAPP_DEFAULT_COUNTRY_CODE || '91',
-  WHATSAPP_COUNTRY_CONFIRMED: (process.env.WHATSAPP_COUNTRY_CONFIRMED === 'true'),
-  WHATSAPP_INCLUDE_DETAILS: (process.env.WHATSAPP_INCLUDE_DETAILS === 'true'),
+  WHATSAPP_INCLUDE_DETAILS: (process.env.WHATSAPP_INCLUDE_DETAILS !== 'false'), // default true for demo
+  WHATSAPP_INCLUDE_PHONE: (process.env.WHATSAPP_INCLUDE_PHONE === 'true'),
+  AUDIO_LINK_ENABLED: (process.env.AUDIO_LINK_ENABLED !== 'false'),
+  AUDIO_LINK_TTL_HOURS: parseInt(process.env.AUDIO_LINK_TTL_HOURS || '24', 10),
+  AUDIO_LINK_MAX_PLAYS: parseInt(process.env.AUDIO_LINK_MAX_PLAYS || '5', 10),
   SEED_DEMO_DATA: (process.env.SEED_DEMO_DATA !== 'false'),
   DATA_DIR: path.join(rootDir, 'data'),
   STORAGE_DIR: path.join(rootDir, 'storage'),

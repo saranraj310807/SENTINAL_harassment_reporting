@@ -22,9 +22,9 @@ export class AudioRecorderComponent {
 
   getBestMimeType() {
     const types = [
+      'audio/mp4',
       'audio/webm;codecs=opus',
       'audio/webm',
-      'audio/mp4',
       'audio/ogg;codecs=opus',
       'audio/wav'
     ];

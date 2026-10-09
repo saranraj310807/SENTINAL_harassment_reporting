@@ -168,7 +168,7 @@ function renderStudentView(mount, c) {
   const btnWa = mount.querySelector('#btn-student-wa');
   if (btnWa) {
     btnWa.addEventListener('click', () => {
-      openWhatsAppNotificationModal(c.id, { level: 'minimal' });
+      openWhatsAppNotificationModal(c.id, { level: 'extended' });
     });
   }
 

@@ -24,6 +24,7 @@ export async function seedDatabase(forceClean = false) {
     if (forceClean) {
       console.log('[SEED] Clearing existing records for clean reset...');
       const tables = [
+        'audio_links', 'audio_share_copies',
         'whatsapp_notifications', 'notifications', 'status_history', 'info_requests',
         'internal_notes', 'investigation_tasks', 'investigations', 'escalation_history',
         'link_candidates', 'cctv_requests', 'evidence', 'audio_complaints', 'cases',

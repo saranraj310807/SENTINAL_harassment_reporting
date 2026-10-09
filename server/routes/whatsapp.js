@@ -2,6 +2,7 @@ import express from 'express';
 import { requireAuth } from '../middleware/auth.js';
 import { whatsAppService } from '../notifications/whatsapp.js';
 import { db } from '../db/index.js';
+import { config } from '../config/index.js';
 
 const router = express.Router();
 
@@ -10,7 +11,7 @@ router.post('/:caseId/prepare', requireAuth, (req, res, next) => {
   try {
     const user = req.user;
     const caseId = req.params.caseId;
-    const { level } = req.body;
+    const { level, audioLinkUrl } = req.body;
 
     const caseRow = db.prepare('SELECT student_user_id FROM cases WHERE id = ?').get(caseId);
     if (!caseRow) return res.status(404).json({ error: 'Case not found' });
@@ -20,8 +21,10 @@ router.post('/:caseId/prepare', requireAuth, (req, res, next) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    const defaultLevel = config.WHATSAPP_INCLUDE_DETAILS ? 'extended' : 'minimal';
     const notification = whatsAppService.prepareNotification(caseId, user.id, {
-      level: level || (user.role === 'student' ? 'minimal' : 'extended')
+      level: level || defaultLevel,
+      audioLinkUrl
     });
 
     res.json(notification);
@@ -30,16 +33,25 @@ router.post('/:caseId/prepare', requireAuth, (req, res, next) => {
   }
 });
 
-// Record honest WhatsApp interaction states (opened, awaiting_manual_send)
+// Record honest WhatsApp interaction states
+// States: prepared, opened, awaiting_manual_send, audio_share_sheet_opened, audio_link_created
 router.post('/:notificationId/state', requireAuth, (req, res, next) => {
   try {
     const user = req.user;
     const notificationId = req.params.notificationId;
     const { state } = req.body;
 
-    if (!['opened', 'awaiting_manual_send'].includes(state)) {
+    const allowedStates = [
+      'prepared',
+      'opened',
+      'awaiting_manual_send',
+      'audio_share_sheet_opened',
+      'audio_link_created'
+    ];
+
+    if (!allowedStates.includes(state)) {
       return res.status(400).json({
-        error: 'Invalid state. Honest tracking only allows "opened" and "awaiting_manual_send". Fake delivery confirmations are prohibited.'
+        error: 'Invalid state. Honest tracking allows only: prepared, opened, awaiting_manual_send, audio_share_sheet_opened, audio_link_created. Delivery claims are prohibited.'
       });
     }
 

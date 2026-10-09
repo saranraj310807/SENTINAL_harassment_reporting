@@ -24,28 +24,28 @@ export const helmetMiddleware = helmet({
   crossOriginEmbedderPolicy: false
 });
 
-// Global API rate limiter (120 requests per minute)
+// Global API rate limiter
 export const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 180,
+  max: config.NODE_ENV === 'test' ? 2000 : 180,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests. Please slow down and try again later.' }
 });
 
-// Sensitive login rate limiter (8 attempts per 15 minutes)
+// Sensitive login rate limiter
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: config.NODE_ENV === 'test' ? 1000 : 15,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many login attempts from this network. Please wait 15 minutes.' }
 });
 
-// Complaint submission rate limiter (10 submissions per 10 minutes)
+// Complaint submission rate limiter
 export const submissionLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
-  max: 15,
+  max: config.NODE_ENV === 'test' ? 1000 : 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Submission limit reached. Please wait before submitting another report.' }

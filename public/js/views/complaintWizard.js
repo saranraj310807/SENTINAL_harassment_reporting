@@ -577,7 +577,7 @@ export async function bindComplaintWizardEvents(container, router, params = {}) 
       // Bind WhatsApp button on success card
       const btnWa = container.querySelector('#btn-open-wa-demo');
       btnWa.addEventListener('click', () => {
-        openWhatsAppNotificationModal(newCase.id, { level: 'minimal' });
+        openWhatsAppNotificationModal(newCase.id, { level: 'extended' });
       });
 
       // Update link for tracking button

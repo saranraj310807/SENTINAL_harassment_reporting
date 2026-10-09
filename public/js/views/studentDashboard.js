@@ -176,7 +176,7 @@ export async function bindStudentDashboardEvents(container, router) {
     const waButtons = listEl.querySelectorAll('.open-wa-btn');
     waButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        openWhatsAppNotificationModal(btn.dataset.caseId, { level: 'minimal' });
+        openWhatsAppNotificationModal(btn.dataset.caseId, { level: 'extended' });
       });
     });
 
