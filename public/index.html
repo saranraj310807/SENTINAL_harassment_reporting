@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SENTINEL | Confidential Campus Safety & Harassment Reporting</title>
+  <meta name="description" content="Confidential campus safety platform for reporting ragging, harassment, and bullying by written complaint or direct audio.">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/components.css">
+</head>
+<body>
+  <!-- Accessibility Skip Link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Top Banner Stack -->
+  <header class="banner-stack" role="banner">
+    <!-- Persistent Emergency Disclaimer -->
+    <div class="emergency-banner" role="alert" aria-live="polite">
+      <div>
+        <strong>EMERGENCY NOTICE:</strong> SENTINEL is not an emergency response service. In immediate physical danger, call Campus Security: <strong>044-2257-8888</strong> or National Police: <strong>112</strong>.
+      </div>
+      <div>Campus Security Desk 24/7</div>
+    </div>
+
+    <!-- Prototype Demo Notice & Quick Role Switcher -->
+    <div class="demo-prototype-banner">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="badge" style="background: #4338CA; color: #FFFFFF;">DEMO PROTOTYPE</span>
+        <span>Synthetic demonstration data only. All students, cameras & incidents are fictional.</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <label for="demo-account-select" style="font-size: 0.75rem; color: #E0E7FF;">Quick Demo Switch:</label>
+        <select id="demo-account-select" class="demo-switcher-select" aria-label="Quick Demo Account Switcher">
+          <option value="">Switch Demo Account...</option>
+          <option value="student1">Priya Sharma (Student - CSE)</option>
+          <option value="student2">Rahul Varma (Student - ECE)</option>
+          <option value="hod_cse">Dr. Ramanathan (HOD - CSE)</option>
+          <option value="hod_ece">Dr. Meenakshi (HOD - ECE)</option>
+          <option value="dean">Dr. Aruna (Dean of Student Affairs)</option>
+          <option value="higher">Prof. Rajagopal (Campus Safety Director)</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Shell Application Mount -->
+  <div id="app" class="app-layout">
+    <!-- Rendered dynamically by Vanilla JS ES Module router -->
+    <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 60vh;">
+      <div style="text-align: center; color: #94A3B8;">
+        <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 8px; color: #FFFFFF;">Loading SENTINEL...</div>
+        <div>Initializing secure reporting environment...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Aria Live Region -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Global Modal Root Container -->
+  <div id="modal-container"></div>
+
+  <!-- Application Entrypoint -->
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

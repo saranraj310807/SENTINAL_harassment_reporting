@@ -1,0 +1,37 @@
+{
+  "name": "sentinel-safety-reporting",
+  "version": "1.0.0",
+  "description": "SENTINEL - Confidential Campus Safety & Harassment Reporting System",
+  "main": "server/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "migrate": "node server/migrations/migrator.js",
+    "seed": "node server/seed/seed.js",
+    "test": "node --test tests/**/*.test.js",
+    "backup": "node scripts/backup.js"
+  },
+  "keywords": [
+    "campus-safety",
+    "harassment-reporting",
+    "confidential",
+    "sentinel"
+  ],
+  "author": "HackVerse Sentinel Team",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.5",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "multer": "^1.4.5-lts.1",
+    "zod": "^3.24.1"
+  },
+  "optionalDependencies": {
+    "better-sqlite3": "^11.8.1"
+  }
+}

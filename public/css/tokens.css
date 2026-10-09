@@ -1,0 +1,99 @@
+/* SENTINEL Design System Tokens - Enterprise Campus Safety */
+:root {
+  /* Surfaces */
+  --surface-canvas: #070B1A;
+  --surface-shell: #0E1530;
+  --surface-shell-hover: #141C3D;
+  --surface-shell-border: #1E2958;
+  
+  --surface-card: #FFFFFF;
+  --surface-card-subtle: #F6F8FC;
+  --surface-card-border: #E2E8F0;
+  --surface-card-hover: #F1F5F9;
+
+  /* Typography Colors */
+  --text-on-dark: #F8FAFC;
+  --text-on-dark-muted: #94A3B8;
+  --text-on-dark-faint: #64748B;
+
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --text-disabled: #94A3B8;
+
+  /* Brand Accents */
+  --accent-teal: #14B8A6;
+  --accent-teal-dark: #0D9488;
+  --accent-teal-light: #CCFBF1;
+  --accent-cyan: #06B6D4;
+  --accent-cyan-light: #CFFAFE;
+  --accent-violet: #8B7CFF;
+  --accent-violet-light: #EDE9FE;
+
+  /* Semantics */
+  --color-danger: #EF4444;
+  --color-danger-bg: #FEF2F2;
+  --color-danger-border: #FCA5A5;
+  --color-danger-dark: #B91C1C;
+
+  --color-warning: #F59E0B;
+  --color-warning-bg: #FFFBEB;
+  --color-warning-border: #FCD34D;
+  --color-warning-dark: #B45309;
+
+  --color-success: #10B981;
+  --color-success-bg: #ECFDF5;
+  --color-success-border: #6EE7B7;
+  --color-success-dark: #047857;
+
+  --color-info: #3B82F6;
+  --color-info-bg: #EFF6FF;
+  --color-info-border: #93C5FD;
+  --color-info-dark: #1D4ED8;
+
+  /* Badges */
+  --badge-hod-bg: #E0E7FF;
+  --badge-hod-text: #3730A3;
+  --badge-dean-bg: #FEF3C7;
+  --badge-dean-text: #92400E;
+  --badge-higher-bg: #FEE2E2;
+  --badge-higher-text: #991B1B;
+
+  /* Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-dark: 0 10px 30px rgba(0, 0, 0, 0.35);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Tap targets & Layout */
+  --min-tap: 44px;
+  --sidebar-width: 260px;
+  --header-height: 64px;
+  --drawer-width: 280px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
